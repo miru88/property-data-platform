@@ -201,4 +201,30 @@ CREATE TABLE municipality_tax_data (
   , UNIQUE ("municipalityId", "fiscalYear")
 );
 
+
+-- Cross-state tax rate handling. Confirmed via research: states express
+-- rates differently (MA/CT: per $1,000 — CA/AZ: direct percentage —
+-- TX: per $100) and use different assessment ratios (MA: 100% of market
+-- value — NM: 33.3% — SC: 4% on primary residences). Without both of
+-- these, taxBurden = assessedValue × rate is only correct for MA,
+-- silently wrong for any state with a different convention.
+--
+-- residentialTaxRate/commercialTaxRate stay normalized to per-$1,000 at
+-- parse time regardless of source format — same principle as normalizing
+-- field names, one canonical unit for actual calculation.
+--
+-- assessmentRatio is a real second input the formula needs, not a
+-- formatting quirk — corrected formula:
+--   taxBurden = assessedValue × assessmentRatio × (rate / 1000)
+-- Defaults to 1.0, so existing MA rows need no backfill.
+--
+-- rateBasis records what format the source ORIGINALLY reported the rate
+-- in, before normalization — provenance for debugging a bad conversion,
+-- not used in the calculation itself.
+CREATE TYPE tax_rate_basis AS ENUM ('PER_THOUSAND', 'PERCENTAGE', 'PER_HUNDRED');
+ 
+ALTER TABLE municipality_tax_data
+	ADD COLUMN "assessmentRatio" NUMERIC(5, 4) NOT NULL DEFAULT 1.0
+  , ADD COLUMN "rateBasis" tax_rate_basis NOT NULL DEFAULT 'PER_THOUSAND';
+
 COMMIT;
