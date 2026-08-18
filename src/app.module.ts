@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { IngestionModule } from './ingestion/ingestion.module';
 import * as entities from './entities';
 
 @Module({
@@ -22,7 +23,8 @@ import * as entities from './entities';
         entities: Object.values(entities),
         synchronize: false,
       })
-    })
+    }),
+    IngestionModule
   ],
   controllers: [AppController],
   providers: [AppService],

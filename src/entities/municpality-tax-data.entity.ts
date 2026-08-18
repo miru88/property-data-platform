@@ -32,5 +32,10 @@ export class MunicpalityTaxData {
     @Column({nullable: true})
     commercialTaxRate?: number;
 
+    @Column({nullable: false})
+    assessmentRatio!: number;
+
+    @Column({nullable: false})
+    rateBasis!: string;
 
 }
