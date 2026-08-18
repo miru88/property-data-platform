@@ -3,13 +3,11 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
-  CreateDateColumn,
   Unique
 } from 'typeorm';
 
-import { Source, Municipality } from './index';
+import { Municipality } from './index';
 
 @Entity('parcel')
 @Unique(['municipalityId', 'sourceParcelId'])

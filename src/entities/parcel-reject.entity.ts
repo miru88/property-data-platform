@@ -3,10 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
-  CreateDateColumn,
-  Unique
 } from 'typeorm';
 
 import { IngestionRun } from './index';

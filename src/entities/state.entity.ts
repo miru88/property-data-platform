@@ -2,10 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   OneToMany,
-  JoinColumn,
-  CreateDateColumn,
 } from 'typeorm';
 import { Municipality } from './municipality.entity';
 

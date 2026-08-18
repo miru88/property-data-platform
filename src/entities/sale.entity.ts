@@ -7,7 +7,7 @@ import {
   Unique,
 } from 'typeorm';
 
-import { Parcel , IngestionRun } from './index';
+import { Parcel } from './index';
 
 
 @Entity('sale')

@@ -3,9 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
-  CreateDateColumn,
 } from 'typeorm';
 import { State, Municipality, AdapterType } from './index';
 

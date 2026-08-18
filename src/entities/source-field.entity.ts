@@ -3,13 +3,11 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
-  CreateDateColumn,
   Unique
 } from 'typeorm';
 
-import { Source, Municipality } from './index';
+import { Source } from './index';
 @Entity('source_field')
 @Unique(['sourceId','fieldId'])
 export class SourceField {

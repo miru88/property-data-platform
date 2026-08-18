@@ -3,11 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
-  CreateDateColumn,
 } from 'typeorm';
-import { State, Municipality, AdapterType, Source } from './index';
+import {  Source } from './index';
 
 @Entity('source_schedule')
 export class SourceSchedule {

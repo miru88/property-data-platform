@@ -3,12 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   JoinColumn,
-  CreateDateColumn,
   Unique,
 } from 'typeorm';
-import { State } from './state.entity';
 import { Municipality } from './municipality.entity';
 
 
