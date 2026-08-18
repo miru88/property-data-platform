@@ -26,13 +26,4 @@ export class Municipality {
     @Column({nullable: false})
     name!: string;
 
-    @Column({nullable: false})
-    fiscalYear!: number;
-
-    @Column({ type: 'numeric', precision: 10, scale: 4, nullable: true })
-    residentialTaxRate?: number;
-
-    @Column({ type: 'numeric', precision: 10, scale: 4, nullable: true })
-    commercialTaxRate?: number;
-
 }

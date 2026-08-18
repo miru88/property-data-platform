@@ -1,3 +1,5 @@
+BEGIN;
+
 -- Property Data Platform — Schema DDL
 -- Tables created in dependency order (referenced tables before referencing ones)
 
@@ -150,3 +152,53 @@ CREATE TABLE parcel_reject (
   , "rawRow" JSONB NOT NULL
   , reason TEXT NOT NULL
 );
+
+
+
+-- ============================================================
+-- Schema updates — August 16, 2026
+-- ============================================================
+
+-- source_field: replaced isMapped boolean with mappedColumn text.
+-- NULL means unmapped, a value names which real column this field
+-- maps to. One column doing both jobs — cataloging every field ever
+-- seen from a source, and recording where mapped ones actually go.
+ALTER TABLE source_field
+	DROP COLUMN "isMapped"
+  , ADD COLUMN "mappedColumn" TEXT;
+
+-- Decided against extraAttributes on assessment OR parcel.
+-- source_field already tracks every field ever seen per source, and
+-- whether it's mapped (mappedColumn). The raw source data for any
+-- unmapped field is fully reconstructable from R2 at any time —
+-- nothing is lost by not also storing it redundantly in Postgres.
+-- No concrete feature currently needs to query an unmapped field in
+-- SQL; if that need ever arises for a specific field, add it as a
+-- real column then, backfilled from R2, rather than storing every
+-- unmapped field speculatively now.
+ALTER TABLE parcel
+	DROP COLUMN "extraAttributes";
+
+
+-- municipality: dropped fiscalYear, residentialTaxRate, commercialTaxRate.
+-- These change annually just like assessment's values do — leaving them
+-- on municipality meant every historical tax-burden calculation would
+-- use whatever rate is CURRENT, not the rate that was actually in effect
+-- for that assessment's fiscal year. Same fix pattern as assessment
+-- being split out from parcel originally: versioned data gets its own
+-- table, keyed by (municipalityId, fiscalYear).
+ALTER TABLE municipality
+	DROP COLUMN "fiscalYear"
+  , DROP COLUMN "residentialTaxRate"
+  , DROP COLUMN "commercialTaxRate";
+ 
+CREATE TABLE municipality_tax_data (
+	id SERIAL PRIMARY KEY
+  , "municipalityId" INTEGER NOT NULL REFERENCES municipality(id)
+  , "fiscalYear" SMALLINT NOT NULL
+  , "residentialTaxRate" NUMERIC(10, 4)
+  , "commercialTaxRate" NUMERIC(10, 4)
+  , UNIQUE ("municipalityId", "fiscalYear")
+);
+
+COMMIT;
