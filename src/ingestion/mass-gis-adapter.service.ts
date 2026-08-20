@@ -1,43 +1,56 @@
 import { Injectable } from '@nestjs/common';
-import * as FETCH_PARAMS from '../constants/fetchParams.constants'
-import { Adapter } from '../interfaces/adapter.interface';
+import * as FETCH_PARAMS from './mass-gis-adapter.constants'
+import { Adapter, ArcGisQueryResponse } from './mass-gis-adapter.types';
 
 
-
-interface ArcGisQueryResponse {
-  features: Array<{ attributes: Record<string, unknown> }>;
-  exceededTransferLimit?: boolean;
-  error?: { code: number; message: string };
-}
-
-const FEATURE_SERVER_URL: string =
-  'https://services1.arcgis.com/hGdibHYSPO59RG1h/arcgis/rest/services/Massachusetts_Property_Tax_Parcels/FeatureServer';
 
 @Injectable()
 export class MassGisAdapterService implements Adapter{
 
     constructor() {}
 
-    private async getTowns(): Promise<string[]> {
-        
-        
 
+    async fetchAllParcels(): Promise<Record<string, unknown>[]> {
 
-        return [];
+        const allRecords: Record<string, unknown>[] = [];
+        let rowOffset: number = 0;
+        let hasMoreRows: boolean = true;
+
+        while (hasMoreRows) {
+            console.log(`Fetching offset ${rowOffset}...`);
+            const page = await fetchPageWithRetry(rowOffset);
+
+            const records = page.features.map((f) => f.attributes);
+            allRecords.push(...records);
+
+            hasMoreRows = page.exceededTransferLimit === true || records.length === FETCH_PARAMS.PAGE_SIZE;
+            hasMoreRows += records.length;
+
+            if (records.length === 0) {
+            hasMoreRows = false;
+            }
+        }
+
+        console.log(`Done. Fetched ${allRecords.length} records for ${TOWN}.`);
+        return allRecords;
     }
 
-    private async fetchPageWithRetry(offset: number, attempt: number = 1): Promise<ArcGisQueryResponse> {
-    const params = new URLSearchParams({
-        where: `CITY='${TOWN}'`,
-        outFields:
-        'PROP_ID,LOC_ID,CITY,SITE_ADDR,OWNER1,OWN_ADDR,LAND_VAL,BLDG_VAL,TOTAL_VAL,FY,LOT_SIZE,LS_DATE,LS_PRICE,USE_CODE,YEAR_BUILT,BLD_AREA,UNITS,ZONING',
+    async fetchPageWithRetry(
+    offset: number,
+    attempt: number = 1,
+    townName: string,
+    ): Promise<ArcGisQueryResponse> {
+    
+    const params: URLSearchParams = new URLSearchParams({
+        where: `CITY='${townName}'`,
+        outFields: '*',
         returnGeometry: 'false',
         resultOffset: String(offset),
         resultRecordCount: String(FETCH_PARAMS.PAGE_SIZE),
         f: 'json',
     });
 
-    const url = `${FEATURE_SERVER_URL}/${FETCH_PARAMS.LAYER_INDEX}/query?${params.toString()}`;
+    const url: string = `${FETCH_PARAMS.FEATURE_SERVER_URL}/${FETCH_PARAMS.LAYER_INDEX}/query?${params.toString()}`;
 
     try {
         const response = await fetch(url);
@@ -54,13 +67,13 @@ export class MassGisAdapterService implements Adapter{
 
         return data;
     } catch (err) {
-        if (attempt >= MAX_RETRIES) {
+        if (attempt >= FETCH_PARAMS.MAX_RETRIES) {
         throw new Error(
-            `Failed after ${MAX_RETRIES} attempts at offset ${offset}: ${(err as Error).message}`,
+            `Failed after ${FETCH_PARAMS.MAX_RETRIES} attempts at offset ${offset}: ${(err as Error).message}`,
         );
         }
 
-        const backoff = BASE_BACKOFF_MS * 2 ** (attempt - 1);
+        const backoff = FETCH_PARAMS.BASE_BACKOFF_MS * 2 ** (attempt - 1);
         console.warn(
         `Attempt ${attempt} failed at offset ${offset} (${(err as Error).message}), retrying in ${backoff}ms...`,
         );
