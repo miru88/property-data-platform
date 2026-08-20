@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import * as FETCH_PARAMS from './mass-gis-adapter.constants'
 import { Adapter, ArcGisQueryResponse } from './mass-gis-adapter.types';
+import { HttpService } from '@nestjs/axios';
 
 
 
 @Injectable()
 export class MassGisAdapterService implements Adapter{
 
-    constructor() {}
+    constructor(private readonly httpService: HttpService) {}
 
 
     async fetchAllParcels(): Promise<Record<string, unknown>[]> {
@@ -53,9 +54,9 @@ export class MassGisAdapterService implements Adapter{
     const url: string = `${FETCH_PARAMS.FEATURE_SERVER_URL}/${FETCH_PARAMS.LAYER_INDEX}/query?${params.toString()}`;
 
     try {
-        const response = await fetch(url);
+        const response = await this.httpService.axiosRef.get(url);
 
-        if (!response.ok) {
+        if (!response.headers) { // need to change the way we do this, const data: ArcGisQueryResponse = response.data; the throw automatically happens with nestjs axios
         throw new Error(`HTTP ${response.status}`);
         }
 
